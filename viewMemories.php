@@ -23,44 +23,19 @@
         <table class="table table-dark table-striped table-bordered">
             <tr>
 
-                <th scope="col">Place</th>
                 <th scope="col">Date</th>
+                <th scope="col">Place</th>
+                <th scope="col">Description</th>
 
 
             </tr>
 
         <?php
-
-            $userID = $_GET['userId'];
-            // // $password = $_POST['password'];
-            // $db = new PDO("mysql:host=localhost;dbname=taskManager", "student", "student");
-            //
-            // $sql = "SELECT * FROM memories INNER JOIN users USING :userID";
-            // $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            //
-            // try {
-            //     $query = $db->prepare($sql);
-            //     $query->bindParam(':userID', $userID);
-            //     //$query->bindParam(':password', $password);
-            //
-            //     $query->execute();
-            //     $results = $query->fetchAll(PDO::FETCH_ASSOC);
-                //$verifyUsername = $results[0]['username'];
-
-
-                // if ($username === $verifyUsername ) {
-                //     $verifiedUserId = $results[0]['user_id'];
-                //
-                //     return $verifiedUserId;
-                // } else {
-                //     echo("No account found please <a href = 'index.html'>try again</a>");
-                // }
-            // } catch (Exception $exception) {
-            //     echo "{$exception->getMessage()}<br/>";
-            // }
+        session_start();
+        $userID = $_SESSION['id'];
 
         $db = new PDO("mysql:host=localhost;dbname=foreverMemories", "student", "student");
-        $sql = "SELECT b.username, a.place, a.date FROM users b INNER JOIN memories a USING (userID) WHERE userID= :userID";
+        $sql = "SELECT b.username, a.place, a.date, a.description FROM users b INNER JOIN memories a USING (userID) WHERE userID= :userID";
         $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
         try {
@@ -70,8 +45,9 @@
             $results = $query->fetchAll(PDO::FETCH_ASSOC);
 
             foreach ($results as $row) {
-                echo "<tr><td>" . $row['place'] ."</td><td>"
-                    . $row['date'] . "</td></tr>";
+                echo "<tr><td>" . $row['date'] . "</td><td>"
+                    . $row['place'] ."</td><td>"
+                    . $row['description'] . "</td></tr>";
 
             }
 

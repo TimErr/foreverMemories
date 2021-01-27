@@ -1,84 +1,250 @@
 <?php
-$passwordRepeat = $_POST['passwordRepeat'];
-$username = $_POST['username'];
-$password = $_POST['password'];
+// Include config file
+require_once "config.php";
 
-function openDatabase() {
-    $db = new PDO("mysql:host=localhost;dbname=foreverMemories", "student", "student");
-    return $db;
-}
+// Define variables and initialize with empty values
+$username = $password = $confirm_password = "";
+$username_err = $password_err = $confirm_password_err = "";
 
+// Processing form data when form is submitted
+if($_SERVER["REQUEST_METHOD"] == "POST"){
 
-//creates username and password in DB
-if ($passwordRepeat === $password) {
-    $pw = password_hash($password, PASSWORD_DEFAULT);
+    // Validate username
+    if(empty(trim($_POST["username"]))){
+        $username_err = "Please enter a username.";
+    } else{
+        // Prepare a select statement
+        $sql = "SELECT userID FROM users WHERE username = :username";
 
-    $db = openDatabase();
+        if($stmt = $pdo->prepare($sql)){
+            // Bind variables to the prepared statement as parameters
+            $stmt->bindParam(":username", $param_username, PDO::PARAM_STR);
 
-    $sql = "INSERT INTO users (username, password) VALUES (:username, :password)";
-    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            // Set parameters
+            $param_username = trim($_POST["username"]);
 
-    try {
-        $query = $db->prepare($sql);
-        $query->bindParam(':username', $username);
-        $query->bindParam(':password', $pw);
-        $query->execute();
-        $userId = $db->lastInsertId();
-        viewMemories($userId);
-    } catch (Exception $exception) {
-        echo "{$exception->getMessage()}<br/>";
+            // Attempt to execute the prepared statement
+            if($stmt->execute()){
+                if($stmt->rowCount() == 1){
+                    $username_err = "This username is already taken.";
+                } else{
+                    $username = trim($_POST["username"]);
+                }
+            } else{
+                echo "Oops! Something went wrong. Please try again later.";
+            }
+
+            // Close statement
+            unset($stmt);
+        }
     }
 
+    // Validate password
+    if(empty(trim($_POST["password"]))){
+        $password_err = "Please enter a password.";
+    } elseif(strlen(trim($_POST["password"])) < 6){
+        $password_err = "Password must have atleast 6 characters.";
+    } else{
+        $password = trim($_POST["password"]);
+    }
 
+    // Validate confirm password
+    if(empty(trim($_POST["confirm_password"]))){
+        $confirm_password_err = "Please confirm password.";
+    } else{
+        $confirm_password = trim($_POST["confirm_password"]);
+        if(empty($password_err) && ($password != $confirm_password)){
+            $confirm_password_err = "Password did not match.";
+        }
+    }
 
-} else {
-    echo("Error creating account passwords do not match\n");
-    echo("<a href='index.html'>Try again</a>");
+    // Check input errors before inserting in database
+    if(empty($username_err) && empty($password_err) && empty($confirm_password_err)){
+
+        // Prepare an insert statement
+        $sql = "INSERT INTO users (username, password) VALUES (:username, :password)";
+
+        if($stmt = $pdo->prepare($sql)){
+            // Bind variables to the prepared statement as parameters
+            $stmt->bindParam(":username", $param_username, PDO::PARAM_STR);
+            $stmt->bindParam(":password", $param_password, PDO::PARAM_STR);
+
+            // Set parameters
+            $param_username = $username;
+            $param_password = password_hash($password, PASSWORD_DEFAULT); // Creates a password hash
+
+            // Attempt to execute the prepared statement
+            if($stmt->execute()){
+                // Redirect to login page
+                header("location: login.php");
+            } else{
+                echo "Something went wrong. Please try again later.";
+            }
+
+            // Close statement
+            unset($stmt);
+        }
+    }
+
+    // Close connection
+    unset($pdo);
 }
+?>
 
-// //verify login info against DB
-//     $pw = password_hash($password, PASSWORD_DEFAULT);
-//
-//     $db = openDatabase();
-//
-//     $sql = "SELECT * FROM users WHERE username= :username";
-//     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-//
-//     try {
-//         $query = $db->prepare($sql);
-//         $query->bindParam(':username', $username);
-//         //$query->bindParam(':password', $pw);
-//         $query->execute();
-//         $result = $query->fetchAll(PDO::FETCH_ASSOC);
-//         $passwordHash = $result[0]['password'];
-//         $verifiedPassword = password_verify($password, $passwordHash);
-//         if ($verifiedPassword) {
-//             $verifyUser = $result[0]['username'];
-//             if($username == $verifyUser){
-//                 $verifiedUserId = $result[0]['userID'];
-//                 viewMemories($verifiedUserId);
-//             }
-//         } else {
-//             echo ("password does not match");
-//         }
-//
-//     } catch (Exception $exception) {
-//         echo "{$exception->getMessage()}<br/>";
-//     }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sign Up</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.css">
+    <style type="text/css">
+        body{ font: 14px sans-serif; }
+        .wrapper{ width: 350px; padding: 20px; }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <h2>Sign Up</h2>
+        <p>Please fill this form to create an account.</p>
+        <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
+            <div class="form-group <?php echo (!empty($username_err)) ? 'has-error' : ''; ?>">
+                <label>Username</label>
+                <input type="text" name="username" class="form-control" value="<?php echo $username; ?>">
+                <span class="help-block"><?php echo $username_err; ?></span>
+            </div>
+            <div class="form-group <?php echo (!empty($password_err)) ? 'has-error' : ''; ?>">
+                <label>Password</label>
+                <input type="password" name="password" class="form-control" value="<?php echo $password; ?>">
+                <span class="help-block"><?php echo $password_err; ?></span>
+            </div>
+            <div class="form-group <?php echo (!empty($confirm_password_err)) ? 'has-error' : ''; ?>">
+                <label>Confirm Password</label>
+                <input type="password" name="confirm_password" class="form-control" value="<?php echo $confirm_password; ?>">
+                <span class="help-block"><?php echo $confirm_password_err; ?></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" class="btn btn-primary" value="Submit">
+                <input type="reset" class="btn btn-default" value="Reset">
+            </div>
+            <p>Already have an account? <a href="login.php">Login here</a>.</p>
+        </form>
+    </div>
+</body>
+<!--
+ Old Code from before swithing to mixed PHP and HTML and server sessions.
 
-function viewMemories($userId) {
+ //Include the config file
+ // require_once "config.php";
+ // $username = $password = $passwordRepeat = "";
+ // $password_err = $passwordRepeat_err = "";
+ //
+ //
+ // if($_SERVER["REQUEST_METHOD"] == "POST"){
+ //     if(empty(trim($_POST["username"]))){
+ //         $username_err = "Please enter a username.";
+ //     } else {
+ //         $sql = "SELECT userID FROM users WHERE username = :username";
+ //
+ //         if($stmt = $pdo->prepare($sql)){
+ //             mysqli_stmt_bind_param($stmt, "s", $param_username);
+ //             $param_username = trim($_POST["username"]);
+ //
+ //             if(mysqli_stmt_execute($stmt)){
+ //                 mysqli_stmt_store_result=($stmt);
+ //
+ //                 if(mysqli_stmt_num_rows($stmt) == 1){
+ //                     $username_err = "This Username is already taken.";
+ //                 } else {
+ //                     $username = trim($_POST["username"]);
+ //                 }
+ //             } else {
+ //                 echo"Opps! Something when wrong. Please try again Later.";
+ //             }
+ //             mysqli_stmt_close($stmt);
+ //         }
+ //     }
+ // }
+ // $passwordRepeat = $_POST['passwordRepeat'];
+ // $username = $_POST['username'];
+ // $password = $_POST['password'];
+ //
+ // function openDatabase() {
+ //     $db = new PDO("mysql:host=localhost;dbname=foreverMemories", "student", "student");
+ //     return $db;
+ // }
 
-     $db = openDatabase();
-     $sql = "SELECT userID FROM users";
-     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    try {
-        $query = $db->prepare($sql);
-        $query->bindParam(':userID', $userId);
-        $query->execute();
-        header('Location: viewMemories.php?userId='.$userId);
-     } catch (Exception $exception) {
-         echo "{$exception->getMessage()}<br/>";
-     }
-}
- ?>
+ //creates username and password in DB
+ // if ($passwordRepeat === $password) {
+ //     $pw = password_hash($password, PASSWORD_DEFAULT);
+ //
+ //     $db = openDatabase();
+ //
+ //     $sql = "INSERT INTO users (username, password) VALUES (:username, :password)";
+ //     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+ //
+ //     try {
+ //         $query = $db->prepare($sql);
+ //         $query->bindParam(':username', $username);
+ //         $query->bindParam(':password', $pw);
+ //         $query->execute();
+ //         $userId = $db->lastInsertId();
+ //         viewMemories($userId);
+ //     } catch (Exception $exception) {
+ //         echo "{$exception->getMessage()}<br/>";
+ //     }
+ //
+ //
+ //
+ // } else {
+ //     echo("Error creating account passwords do not match\n");
+ //     echo("<a href='index.html'>Try again</a>");
+ // }
+
+ // //verify login info against DB
+ //     $pw = password_hash($password, PASSWORD_DEFAULT);
+ //
+ //     $db = openDatabase();
+ //
+ //     $sql = "SELECT * FROM users WHERE username= :username";
+ //     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+ //
+ //     try {
+ //         $query = $db->prepare($sql);
+ //         $query->bindParam(':username', $username);
+ //         //$query->bindParam(':password', $pw);
+ //         $query->execute();
+ //         $result = $query->fetchAll(PDO::FETCH_ASSOC);
+ //         $passwordHash = $result[0]['password'];
+ //         $verifiedPassword = password_verify($password, $passwordHash);
+ //         if ($verifiedPassword) {
+ //             $verifyUser = $result[0]['username'];
+ //             if($username == $verifyUser){
+ //                 $verifiedUserId = $result[0]['userID'];
+ //                 viewMemories($verifiedUserId);
+ //             }
+ //         } else {
+ //             echo ("password does not match");
+ //         }
+ //
+ //     } catch (Exception $exception) {
+ //         echo "{$exception->getMessage()}<br/>";
+ //     }
+ //
+ // function viewMemories($userId) {
+ //
+ //      $db = openDatabase();
+ //      $sql = "SELECT userID FROM users";
+ //      $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+ //
+ //     try {
+ //         $query = $db->prepare($sql);
+ //         $query->bindParam(':userID', $userId);
+ //         $query->execute();
+ //         header('Location: viewMemories.php?userId='.$userId);
+ //      } catch (Exception $exception) {
+ //          echo "{$exception->getMessage()}<br/>";
+ //      }
+ // }
+ -->
+</html>
