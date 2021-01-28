@@ -17,6 +17,7 @@
 
             <ul class="nav navbar-nav">
               <li><a href="#"><span class="glyphicon glyphicon-log-in"></span> Add Memory</a></li>
+              <li><a href="logout.php" class="btn btn-danger">Sign Out of Your Account</a></li>
             </ul>
           </div>
         </nav>
