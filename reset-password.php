@@ -3,11 +3,13 @@
 session_start();
 
 // Check if the user is logged in, if not then redirect to login page
-if(!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true){
-    header("location: login.php");
-    exit;
-}
 
+if (!isset($_SESSION["id"])){
+    if(!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true ) {
+        header("location: login.php");
+        exit;
+    }
+}
 // Include config file
 require_once "config.php";
 
@@ -36,7 +38,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
             $confirm_password_err = "Password did not match.";
         }
     }
-        
+
     // Check input errors before updating the database
     if(empty($new_password_err) && empty($confirm_password_err)){
         // Prepare an update statement
