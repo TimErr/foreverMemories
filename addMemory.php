@@ -33,7 +33,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     if(empty($place_err) && empty($date_err) && empty($description_err)) {
-
+$fileName = basename($_FILES["file"]["name"]);
         $sql = "INSERT INTO memories (place, date, description, file_name, userID) VALUES (:place, :date, :description, :fileName, :userID)";
 
         if ($stmt = $pdo->prepare($sql)){
@@ -64,7 +64,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         $statusMsg = "Sorry, only JPG, JPEG, PNG, GIF files are allowed to upload." . $backlink;
                     }
                 }else{
-                        $statusMsg = "The file <b>".$fileName. "</b> is already exist." . $backlink;
+                        header("location: viewMemories.php");
                     }
             }else{
                 $statusMsg = 'Please select a file to upload.' . $backlink;

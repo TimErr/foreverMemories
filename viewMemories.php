@@ -27,6 +27,7 @@
                 <th scope="col">Date</th>
                 <th scope="col">Place</th>
                 <th scope="col">Description</th>
+                <th scope="col">Image</th>
 
 
             </tr>
@@ -34,9 +35,11 @@
         <?php
         session_start();
         $userID = $_SESSION['id'];
+        $directory = "uploads/" . $_SESSION['username'] . "/images/";
+
 
         $db = new PDO("mysql:host=localhost;dbname=foreverMemories", "student", "student");
-        $sql = "SELECT b.username, a.place, a.date, a.description FROM users b INNER JOIN memories a USING (userID) WHERE userID= :userID";
+        $sql = "SELECT b.username, a.place, a.date, a.description, a.file_name FROM users b INNER JOIN memories a USING (userID) WHERE userID= :userID";
         $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
         try {
@@ -45,10 +48,13 @@
             $query->execute();
             $results = $query->fetchAll(PDO::FETCH_ASSOC);
 
+
             foreach ($results as $row) {
+                $file = $directory . $row['file_name'];
                 echo "<tr><td>" . $row['date'] . "</td><td>"
                     . $row['place'] ."</td><td>"
-                    . $row['description'] . "</td></tr>";
+                    . $row['description'] . "</td><td>"
+                    . "<a target='blank' href='$file'><img src='$file'></a></td></tr>";
 
             }
 
