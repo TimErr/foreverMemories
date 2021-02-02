@@ -6,12 +6,10 @@ require_once "config.php";
 $place = $description = $date = $fileName = "";
 $place_err = $date_err = $description_err = "";
 $userID = $_SESSION['id'];
-
+$username = $_SESSION['username'];
 
 $statusMsg = '';
 $backlink = ' <a href="./">Go back</a>';
-
-
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
@@ -21,7 +19,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     } else {
         $place = trim($_POST["place"]);
     }
-
 
     if(empty(trim($_POST["date"]))){
         $date_err = "Please enter a date for your memory";
@@ -37,7 +34,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if(empty($place_err) && empty($date_err) && empty($description_err)) {
 
-
         $sql = "INSERT INTO memories (place, date, description, file_name, userID) VALUES (:place, :date, :description, :fileName, :userID)";
 
         if ($stmt = $pdo->prepare($sql)){
@@ -51,7 +47,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                 $allowTypes = array('jpg','png','jpeg','gif');
                 // File upload path
-                $targetDir = "uploads/";
+                $targetDir = "uploads/" . $username . "/images/";
                 $fileName = basename($_FILES["file"]["name"]);
                 $targetFilePath = $targetDir . $fileName;
                 $fileType = pathinfo($targetFilePath,PATHINFO_EXTENSION);
@@ -78,44 +74,51 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 ?>
 
-
-
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Upload Image</title>
-</head>
-<body>
-    <nav class="navbar navbar-inverse">
-      <div class="container-fluid">
-        <div class="navbar-header">
-          <a class="navbar-brand" href="index.html">Forever Memories</a>
+    <head>
+      <title>Add a Memory</title>
+      <meta charset="UTF-8">
+
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.css">
+      <style type="text/css">
+          body{ font: 14px sans-serif; }
+          .wrapper{ width: 350px; padding: 20px; }
+      </style>
+    </head>
+    <body>
+        <nav class="navbar navbar-inverse">
+          <div class="container-fluid">
+            <div class="navbar-header">
+              <a class="navbar-brand" href="index.html">Forever Memories</a>
+            </div>
+          </div>
+        </nav>
+        <div class="wrapper">
+          <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post" enctype="multipart/form-data">
+             <div class="form-group <?php echo (!empty($place_err)) ? 'has-error' : ''; ?>">
+                 <label> Place you Visited</label>
+                 <input type="text" name="place" class="form-control" value="<?php echo $place; ?>">
+                 <span class="help-block"><?php echo $place_err; ?></span>
+            </div>
+            <div class="form-group <?php echo (!empty($date_err)) ? 'has-error' : ''; ?>">
+                <label> Date</label>
+                <input type="date" name="date" class="form-control" value="<?php echo $date; ?>">
+                <span class="help-block"><?php echo $date_err; ?></span>
+           </div>
+           <div class="form-group <?php echo (!empty($description_err)) ? 'has-error' : ''; ?>">
+               <label>Description of your Visit</label>
+               <textarea name="description" class="form-control" value="<?php echo $description; ?>"></textarea>
+               <span class="help-block"><?php echo $description_err; ?></span>
+          </div>
+
+                Select Image File to Upload:
+              <input type="file" name="file" value="<?php echo $fileName?>">
+              </br>
+              <input type="submit" class="btn btn-primary" name="submit" value="Save">
+              <a class= "btn btn-link" href="viewMemories.php">Cancel</a>
+          </form>
         </div>
-      </div>
-    </nav>
-  <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post" enctype="multipart/form-data">
-     <div class="form-group <?php echo (!empty($place_err)) ? 'has-error' : ''; ?>">
-         <label> Place you Visited</label>
-         <input type="text" name="place" class="form-control" value="<?php echo $place; ?>">
-         <span class="help-block"><?php echo $place_err; ?></span>
-    </div>
-    <div class="form-group <?php echo (!empty($date_err)) ? 'has-error' : ''; ?>">
-        <label> Date</label>
-        <input type="date" name="date" class="form-control" value="<?php echo $date; ?>">
-        <span class="help-block"><?php echo $date_err; ?></span>
-   </div>
-   <div class="form-group <?php echo (!empty($description_err)) ? 'has-error' : ''; ?>">
-       <label>Description of your Visit</label>
-       <textarea name="description" class="form-control" value="<?php echo $description; ?>"></textarea>
-       <span class="help-block"><?php echo $description_err; ?></span>
-  </div>
-
-        Select Image File to Upload:
-      <input type="file" name="file" value="<?php echo $fileName?>">
-      <input type="submit" name="submit" value="Upload">
-  </form>
-  <hr>
-
-
-</body>
+        <hr>
+    </body>
 </html>

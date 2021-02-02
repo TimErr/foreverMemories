@@ -6,6 +6,7 @@ require_once "config.php";
 // Define variables and initialize with empty values
 $username = $password = $confirm_password = $email = "";
 $username_err = $password_err = $confirm_password_err = $email_err = "";
+$directory = "uploads/";
 
 
 // Processing form data when form is submitted
@@ -109,6 +110,16 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
 
             // Attempt to execute the prepared statement
             if($stmt->execute()){
+                //create directory to store users images
+                $directory .= $username;
+                if(!is_dir($directory)){
+                    //Directory does not exist, so lets create it.
+                    mkdir($directory, 0755, true);
+                    $directory.= "/images";
+                    if(!is_dir($directory)){
+                        mkdir($directory, 0755, true);
+                    }
+                }
                 // Redirect to login page
                 header("location: login.php");
             } else{
