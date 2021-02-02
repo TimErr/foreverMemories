@@ -39,7 +39,7 @@
 
 
         $db = new PDO("mysql:host=localhost;dbname=foreverMemories", "student", "student");
-        $sql = "SELECT b.username, a.place, a.date, a.description, a.file_name FROM users b INNER JOIN memories a USING (userID) WHERE userID= :userID";
+        $sql = "SELECT b.username,a.memoryID, a.place, a.date, a.description, a.file_name FROM users b INNER JOIN memories a USING (userID) WHERE userID= :userID";
         $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
         try {
@@ -51,10 +51,12 @@
 
             foreach ($results as $row) {
                 $file = $directory . $row['file_name'];
+                $memoryID = $row['memoryID'];
                 echo "<tr><td>" . $row['date'] . "</td><td>"
                     . $row['place'] ."</td><td>"
                     . $row['description'] . "</td><td>"
                     . "<a target='blank' href='$file'><img src='$file'></a></td></tr>";
+                    //. "<a href='delete.php($memoryID)'>Delete</td></tr>";
 
             }
 
